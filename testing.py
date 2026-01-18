@@ -1,55 +1,266 @@
-# import streamlit as st
-
-# # إعدادات الصفحة
-# st.set_page_config(page_title="تجرية الأتمتة", page_icon="🤖")
-
-# st.title("🚀 مرحباً بك في موقعك الأول!")
-# st.subheader("هذا الموقع يعمل بواسطة بايثون بالكامل")
-
-# # إدخال نص
-# user_name = st.text_input("ما هو اسمك؟")
-
-# if user_name:
-#     st.success(f"أهلاً بك يا {user_name}! الموقع شغال 100%")
-
-# # زر بسيط
-# if st.button("اضغط هنا لتجربة التفاعل"):
-#     st.balloons() # حركة احتفالية
-#     st.info("الآن تخيل أن هذا الزر هو الذي سيرفع الفيديو ليوتيوب!")
-
-
 import streamlit as st
 import datetime
 import time
+import requests
+import pickle
+import io
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseUpload
+
+# --- 1. إعدادات الصفحة ---
+st.set_page_config(page_title="المساعد المنطقي", page_icon="🤖", layout="wide")
+
+# --- 2. تهيئة الذاكرة (Session State) ---
+if 'step' not in st.session_state:
+    st.session_state.step = 1
+    st.session_state.v_file = None
+    st.session_state.t_file = None
+    st.session_state.v_title = ""
+    st.session_state.v_desc = ""
+    st.session_state.tags = []
+    st.session_state.show_err = False 
+
+
+def send(t) :
+    sid = "ACe0557f10e02c653e115d0810818d2ccc"
+    tok = "c480f9562d1e76e279961bbb46c8ee49"
+    u = f"https://api.twilio.com/2010-04-01/Accounts/{sid}/Messages.json"
+    bot = {
+        "From" : "whatsapp:+14155238886",
+        "To" : "whatsapp:+970595859974",
+        "Body" : t
+    }
+    res = requests.post(u,data=bot,auth=(sid,tok))
+    return res.status_code
+
+def get() :
+    with open ("token.pickle", "rb") as t :
+        o = pickle.load(t) 
+    return build("youtube", "v3", credentials=o)
+
+def you(video, pec, titel, tags, desc, pr, pu=None) :
+    i = get()
+    body = {
+            'snippet': {
+                'title': titel,
+                'description': desc,
+                'tags': tags,
+                'categoryId': '22'
+            },
+            'status': {
+                'privacyStatus': pr,
+                'selfDeclaredMadeForKids': False
+            }
+        }
+    if pu :
+        of = time.strftime("%z")
+        if not of : of = "+02:00"
+        iso = pu.strftime(f'%Y-%m-%dT%H:%M:%S{of}')
+        body['status']['privacyStatus'] = 'private'
+        body['status']['publishAt'] = iso
+    med = MediaIoBaseUpload(io.BytesIO(video.read()), mimetype='application/octet-stream', chunksize=-1, resumable=True)
+    res = i.videos().insert(
+        part='snippet,status',
+        body=body,
+        media_body=med
+    )
+    R = None
+    while R is None :
+        شش, R = res.next_chunk()
+    if R and pec :
+        v = R['id']
+        pec.seek(0) 
+        ex = pec.name.split('.')[-1].lower()
+        if ex == 'jpg': mime = "image/jpeg"
+        elif ex == 'png': mime = "image/png"
+        else: mime = "image/jpeg"
+        t = MediaIoBaseUpload(io.BytesIO(pec.read()), mimetype=mime)
+        try:
+            i.thumbnails().set(videoId=v, media_body=t).execute()
+        except Exception as thumb_err:
+            st.warning(f"⚠️ تم رفع الفيديو ولكن فشل رفع الصورة المصغرة: {thumb_err}")
+    return R
+
     
-# إعدادات الواجهة لتناسب الموبايل (RTL)
-st.markdown("""<style> .stApp { direction: RTL; text-align: right; } </style>""", unsafe_allow_html=True)
+def move(target):
+    s = st.session_state
+    if target > s.step:
+        if s.step == 1 and not s.v_file: s.show_err = True; return
+        if s.step == 2 and not s.t_file: s.show_err = True; return
+        if s.step == 3 and not s.v_title.strip(): s.show_err = True; return
+        if s.step == 4 and not s.v_desc.strip(): s.show_err = True; return
+    s.show_err = False 
+    s.step = target
 
-st.title("🤖 مساعد أبو الصبري الذكي")
-st.subheader("لوحة تحكم أتمتة يوتيوب")
+def split_tags():
+    raw = st.session_state.raw_input_val
+    if raw:
+        new_tags = [t.strip() for t in raw.replace("،", ",").split(",") if t.strip()]
+        for tag in new_tags:
+            if tag not in st.session_state.tags:
+                st.session_state.tags.append(tag)
+        st.session_state.raw_input_val = ""
 
-# 1. قسم البيانات
-with st.container():
-    title = st.text_input("📝 عنوان الفيديو")
-    description = st.text_area("📄 وصف الفيديو")
+# --- 3. الشاشة الجانبية (خليتها زي ما هي) ---
+with st.sidebar:
+    st.markdown("<h2 style='text-align: center;'>🛠️ مركز التحكم</h2>", unsafe_allow_html=True)
+    st.markdown("---")
+    with st.container():
+        st.link_button("📺 زيارة القناة", "https://www.youtube.com/channel/UCUYZPlOw92cDnQ4wmlsLnNg", use_container_width=True)
+    st.markdown("---")
+    st.markdown("### 📊 حالة الملف الحالي")
     
-# 2. قسم الملفات
-video_file = st.file_uploader("🎬 اختر الفيديو من الاستوديو", type=['mp4', 'mov'])
-thumbnail = st.file_uploader("🖼️ اختر الصورة المصغرة", type=['jpg', 'png'])
+    # تحديث تلقائي للحالة عند اختيار الملفات
+    if st.session_state.v_file: st.success(f"✅ تم اختيار: {st.session_state.v_file.name}")
+    else: st.warning("⏳ بانتظار الفيديو")
+    
+    if st.session_state.t_file: st.success(f"✅ تم اختيار: {st.session_state.t_file.name}")
+    else: st.warning("⏳ بانتظار الصورة")
+    
+    if st.session_state.v_title.strip() and st.session_state.v_desc.strip(): st.success("✅ البيانات النصية مكتملة")
+    else: st.warning("⏳ البيانات ناقصة")
+    
+    st.metric(label="الكلمات المفتاحية", value=len(st.session_state.tags))
+    st.markdown("---")
+    if st.button("🗑️ مسح كل البيانات", use_container_width=True):
+        for k in ['v_file','t_file','v_title','v_desc','tags']: 
+            st.session_state[k] = None if 'file' in k else ("" if k != 'tags' else [])
+        st.session_state.step = 1
+        st.rerun()
 
-# 3. قسم الوقت (الجدولة)
-scheduled_date = st.date_input("📅 تاريخ الرفع", datetime.date.today())
-scheduled_time = st.time_input("⏰ وقت الرفع")
+# --- 4. العناوين الثابتة ---
+st.markdown("<h1 style='text-align: center; margin-bottom: 0;'>المساعد الذكي</h1>", unsafe_allow_html=True)
+st.markdown("<h3 style='text-align: center; margin-top: 0; color: #888;'>للنشر على قناة اليوتيوب</h3>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center;'>معكم في كل زمان ومكان</p>", unsafe_allow_html=True)
 
-# 4. زر التنفيذ
-if st.button("🚀 اعتمد العملية وجدول الرفع"):
-    if video_file and title:
-        st.success(f"تم استلام الفيديو: {title}")
-        st.info(f"سيتم الرفع بتاريخ {scheduled_date} الساعة {scheduled_time}")
+st.progress((st.session_state.step - 1) / 5.0)
+st.divider()
+
+# --- 5. منطق الصفحات والرجوع ---
+def show_back_button():
+    if st.session_state.step > 1:
+        if st.button("⬅️", key=f"back_{st.session_state.step}"):
+            st.session_state.step -= 1
+            st.rerun()
+
+if st.session_state.step == 1:
+    show_back_button()
+    st.subheader("🎬 اختيار الفيديو")
+    if st.session_state.show_err and not st.session_state.v_file: st.warning("الرجاء اختيار فيديو!")
+    v_input = st.file_uploader("قم بسحب ملف الفيديو هنا", type=['mp4', 'mov'], key="v_up")
+    if v_input: 
+        st.session_state.v_file = v_input
+        st.session_state.show_err = False
+
+elif st.session_state.step == 2:
+    show_back_button()
+    st.subheader("🖼️ اختيار الصورة المصغرة")
+    if st.session_state.show_err and not st.session_state.t_file: st.warning("الرجاء اختيار صورة!")
+    t_input = st.file_uploader("اختر الصورة المصغرة", type=['jpg', 'png', 'jpeg'], key="t_up")
+    if t_input: 
+        st.session_state.t_file = t_input
+        st.session_state.show_err = False
+
+elif st.session_state.step == 3:
+    show_back_button()
+    st.subheader("✍️ عنوان الفيديو")
+    if st.session_state.show_err and not st.session_state.v_title.strip(): st.warning("الرجاء كتابة العنوان!")
+    st.session_state.v_title = st.text_input("العنوان:", value=st.session_state.v_title)
+
+elif st.session_state.step == 4:
+    show_back_button()
+    st.subheader("📝 وصف الفيديو")
+    if st.session_state.show_err and not st.session_state.v_desc.strip(): st.warning("الرجاء كتابة الوصف!")
+    st.session_state.v_desc = st.text_area("وصف الفيديو", value=st.session_state.v_desc, height=200)
+
+elif st.session_state.step == 5:
+    show_back_button()
+    st.subheader("🏷️ الكلمات المفتاحية")
+    st.text_input(": الصق الكلمات هنا (افصل بفاصلة)", key="raw_input_val")
+    st.session_state.tags = st.multiselect(": الكلمات المعتمدة", options=st.session_state.tags, default=st.session_state.tags, key="final_tags_display")
+
+elif st.session_state.step == 6:
+    show_back_button()
+    st.subheader("🕒 إعدادات النشر النهائية")
+    t_now, t_later = st.tabs(["🚀 النشر الآن", "📅 النشر لاحقاً"])
+    targ = None
+    p_type = "public"
+    
+    with t_now:
+        p_type = st.radio("الخصوصية:", ["public", "private", "unlisted"], 
+                         format_func=lambda x: {"public": "علني", "private": "خاص", "unlisted": "غير مدرج"}[x],
+                         key="p_type_now")
+        st.info("سيتم الرفع ومعالجة البيانات فوراً.")
+        publish_immediate = True
+    
+    with t_later:
+        col1, col2 = st.columns(2)
+        with col1:
+            pub_date = st.date_input(": تاريخ النشر", value=datetime.date.today())
+        with col2:
+            suggested_time = (datetime.datetime.now() + datetime.timedelta(minutes=10)).time()
+            pub_time = st.time_input(": وقت النشر", value=suggested_time, key="t_input")
+        st.checkbox("ضبط كعرض أول فوري")
+        publish_immediate = False
+        p_type_later = "private"
+        targ = datetime.datetime.combine(pub_date, pub_time)
         
-        # هنا سنضع كود الـ YouTube API لاحقاً
-        # حالياً سنحفظ الملف مؤقتاً على السيرفر
-        with open("uploaded_video.mp4", "wb") as f:
-            f.write(video_file.read())
-    else:
-        st.error("الرجاء التأكد من رفع الفيديو وكتابة العنوان")
+    st.divider()
+    if st.button("📥 إتمام العملية والرفع النهائي", use_container_width=True, type="primary"):
+        final_targ = None
+        final_p_type = p_type
+        if targ and targ > datetime.datetime.now():
+            final_targ = targ
+            final_p_type = "private"
+        # if tabs == "📅 النشر لاحقاً" :
+        #     # if targ <= datetime.datetime.now() :
+        #     #     st.error("خطأ: وقت النشر يجب أن يكون في المستقبل!")
+        #     #     st.stop()
+        with st.spinner('...جاري إرسال البيانات إلى خادم يوتيوب صبراَ آل ياسر'):
+            try :
+                res = you(st.session_state.v_file,
+                        st.session_state.t_file,
+                        st.session_state.v_title,
+                        st.session_state.tags,
+                        st.session_state.v_desc,
+                        p_type,
+                        pu=targ)
+                if res :
+                    st.markdown("### ...جاري إنهاء المعالجة")
+                    progress_bar = st.progress(0)
+                    for percent_complete in range(100):
+                        time.sleep(0.01) 
+                        progress_bar.progress(percent_complete + 1)
+                    if final_targ :
+                        m = f"✅ تمت جدولة فيديو ({st.session_state.v_title}) للنشر بتاريخ {pub_date} الساعة {pub_time}"
+                    else :
+                        m = f"✅ تم رفع فيديو ({st.session_state.v_title}) بنجاح"
+                    st.success(m)
+                    r = send(m)
+                    if r in [200,201] :
+                        st.balloons()
+                        st.success("وصلت الرسالة! شيك موبايلك ✅")
+                        time.sleep(2)
+                        # تصفير
+                        for k in ['v_file','t_file','v_title','v_desc','tags']: 
+                            st.session_state[k] = None if 'file' in k else ("" if k != 'tags' else [])
+                        st.session_state.step = 1
+                        st.rerun()
+            except Exception as e:
+                if "uploadLimitExceeded" in str(e):
+                    st.error("🚫 خلصت الحصة اليومية! يوتيوب بيسمح بعدد محدد من الرفعات باليوم. جرب بكرا يا غالي.")
+                else:
+                    st.error(f"❌ حصل خطأ غير متوقع: {e}")
+
+# --- 6. منطقة الأزرار السفلية ---
+st.write("")
+col_split, col_spacer, col_next = st.columns([2, 8, 2])
+with col_split:
+    if st.session_state.step == 5:
+        st.button("➕ إضافة", on_click=split_tags)
+with col_next:
+    if st.session_state.step < 6:
+        st.button("التقدم ➡️", on_click=move, args=(st.session_state.step + 1,))
+
+st.markdown("---")
+st.caption(" نظام أبو الصبري - المطور عبدالله  2026  © ")
