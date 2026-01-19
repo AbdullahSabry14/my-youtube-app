@@ -169,32 +169,40 @@ elif st.session_state.step == 5:
     show_back_button()
     st.subheader("🏷️ الكلمات المفتاحية")
     
-    # 1. التنسيق الجبري - إزالة الألوان وتوحيد المسافات
+    # 1. التنسيق الجبري - إجبار الـ 6 أعمدة في التلفون
     st.markdown("""
         <style>
-        /* تنسيق الكبسات لتشبه أزرار التنقل (بدون خلفية رمادية) */
+        /* أهم سطر: يمنع ستريمليت من قلب الأعمدة تحت بعض في الموبايل */
+        [data-testid="stHorizontalBlock"] {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important; /* يمنع النزول لسطر جديد داخل الصف الواحد */
+            gap: 2px !important; /* تقليل المسافة جداً لتكفي الشاشة */
+        }
+        
+        [data-testid="column"] {
+            width: 16% !important; /* تقريباً سدس العرض */
+            min-width: unset !important;
+            flex: 1 1 0% !important;
+        }
+
+        /* تنسيق الأزرار (شفاف وبدون مسافات) */
         div.stButton > button {
             background-color: transparent !important;
             color: #24292e !important;
             border: 1px solid #d1d5da !important;
-            padding: 2px 5px !important;
-            border-radius: 10px !important;
-            font-size: 12px !important;
-            width: 100% !important; /* تأخذ عرض العمود الصغير */
+            padding: 2px 2px !important; /* تقليل الحواف الداخلية للحد الأدنى */
+            border-radius: 5px !important;
+            font-size: 10px !important; /* تصغير الخط قليلاً ليناسب شاشة الجوال */
+            width: 100% !important;
             white-space: nowrap !important;
             overflow: hidden;
-            text-overflow: ellipsis;
+            text-overflow: clip; /* قص النص الزائد */
         }
         
         div.stButton > button:hover {
             border-color: #0366d6 !important;
             color: #0366d6 !important;
-            background-color: #f6f8fa !important;
-        }
-
-        /* تصفير المسافات بين الأعمدة للتلزيق */
-        [data-testid="stHorizontalBlock"] {
-            gap: 5px !important;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -209,20 +217,20 @@ elif st.session_state.step == 5:
             st.session_state.temp_tag_input = ""
 
     # 2. إدخال البيانات
-    st.text_input("اكتب واضغط Enter (أو افصل بفاصلة):", key="temp_tag_input", on_change=add_tags_callback)
+    st.text_input("اكتب واضغط Enter:", key="temp_tag_input", on_change=add_tags_callback)
 
-    # 3. عرض الكلمات (6 كلمات في كل سطر)
-    st.write("الكلمات (اضغط للحذف):")
+    # 3. عرض الكلمات (6 كلمات في كل سطر غصب عن التلفون)
+    st.write("الكلمات:")
     
     tags = st.session_state.tags
     if tags:
-        # تقسيم الكلمات إلى مجموعات، كل مجموعة فيها 6
         for i in range(0, len(tags), 6):
             row_tags = tags[i:i+6]
-            cols = st.columns(6) # إنشاء 6 أعمدة ثابتة
+            cols = st.columns(6) 
             for j, tag in enumerate(row_tags):
                 with cols[j]:
-                    if st.button(f"{tag} ✕", key=f"tag_btn_{i+j}"):
+                    # حذف الكلمة عند الضغط
+                    if st.button(f"{tag}✕", key=f"tag_btn_{i+j}"):
                         st.session_state.tags.remove(tag)
                         st.rerun()
     else:
