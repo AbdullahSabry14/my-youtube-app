@@ -201,6 +201,7 @@ elif st.session_state.step == 4:
 #             move(6)
 #             st.rerun()
 
+
 elif st.session_state.step == 5:
     show_back_button()
     st.subheader("🏷️ الكلمات المفتاحية")
@@ -272,6 +273,7 @@ elif st.session_state.step == 5:
         if st.button("التقدم ➡️", key="btn_next_5"):
             move(6)
             st.rerun()
+
 elif st.session_state.step == 6:
     show_back_button()
     st.subheader("🕒 إعدادات النشر النهائية")
