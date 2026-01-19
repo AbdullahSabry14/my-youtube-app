@@ -169,28 +169,32 @@ elif st.session_state.step == 5:
     show_back_button()
     st.subheader("🏷️ الكلمات المفتاحية")
     
-    # 1. التنسيق الجبري - هذا الكود بيخلي الكلمات "Chips" جنب بعض غصب عن التلفون
+    # 1. التنسيق الجبري - إزالة الألوان وتوحيد المسافات
     st.markdown("""
         <style>
-        .tag-box {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            padding: 10px 0;
-        }
-        .tag-item {
-            display: inline-block;
-            background-color: #e1e4e8;
+        /* تنسيق الكبسات لتشبه أزرار التنقل (بدون خلفية رمادية) */
+        div.stButton > button {
+            background-color: transparent !important;
             color: #24292e !important;
-            padding: 2px 10px;
-            border-radius: 15px;
-            font-size: 12px;
-            text-decoration: none !important;
-            border: 1px solid #d1d5da;
-            white-space: nowrap;
+            border: 1px solid #d1d5da !important;
+            padding: 2px 5px !important;
+            border-radius: 10px !important;
+            font-size: 12px !important;
+            width: 100% !important; /* تأخذ عرض العمود الصغير */
+            white-space: nowrap !important;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        .tag-item:hover {
-            background-color: #d1d5da;
+        
+        div.stButton > button:hover {
+            border-color: #0366d6 !important;
+            color: #0366d6 !important;
+            background-color: #f6f8fa !important;
+        }
+
+        /* تصفير المسافات بين الأعمدة للتلزيق */
+        [data-testid="stHorizontalBlock"] {
+            gap: 5px !important;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -205,29 +209,24 @@ elif st.session_state.step == 5:
             st.session_state.temp_tag_input = ""
 
     # 2. إدخال البيانات
-    st.text_input("اكتب واضغط Enter:", key="temp_tag_input", on_change=add_tags_callback)
+    st.text_input("اكتب واضغط Enter (أو افصل بفاصلة):", key="temp_tag_input", on_change=add_tags_callback)
 
-    # 3. عرض الكلمات (جنب بعض)
-    st.write("الكلمات (المس الكلمة لحذفها):")
+    # 3. عرض الكلمات (6 كلمات في كل سطر)
+    st.write("الكلمات (اضغط للحذف):")
     
-    # ميزة الحذف عن طريق الـ Query Params لأن الأزرار العادية بتخرب الترتيب
-    query_params = st.query_params
-    if "del_tag" in query_params:
-        tag_to_del = query_params["del_tag"]
-        if tag_to_del in st.session_state.tags:
-            st.session_state.tags.remove(tag_to_del)
-            # تنظيف الرابط بعد الحذف
-            st.query_params.clear()
-            st.rerun()
-
-    # بناء سطر الـ HTML للكلمات
-    tags_html = '<div class="tag-box">'
-    for tag in st.session_state.tags:
-        # الرابط بيضيف اسم الكلمة للرابط عشان نعرف شو نحذف
-        tags_html += f'<a href="?del_tag={tag}" class="tag-item">{tag} ✕</a>'
-    tags_html += '</div>'
-    
-    st.markdown(tags_html, unsafe_allow_html=True)
+    tags = st.session_state.tags
+    if tags:
+        # تقسيم الكلمات إلى مجموعات، كل مجموعة فيها 6
+        for i in range(0, len(tags), 6):
+            row_tags = tags[i:i+6]
+            cols = st.columns(6) # إنشاء 6 أعمدة ثابتة
+            for j, tag in enumerate(row_tags):
+                with cols[j]:
+                    if st.button(f"{tag} ✕", key=f"tag_btn_{i+j}"):
+                        st.session_state.tags.remove(tag)
+                        st.rerun()
+    else:
+        st.caption("لا توجد كلمات حالياً.")
 
     st.divider()
     
