@@ -323,10 +323,10 @@ elif st.session_state.step == 6:
             try :
                 res = you(st.session_state.v_file, st.session_state.t_file, st.session_state.v_title, st.session_state.tags, st.session_state.v_desc, p_type, pu=targ)
                 if res :
+                    ss = send(f"✅ تم رفع فيديو ({st.session_state.v_title})")
                     st.success(f"✅ تم رفع فيديو ({st.session_state.v_title}) بنجاح")
-                    send(f"✅ تم رفع فيديو ({st.session_state.v_title})")
                     st.balloons()
-                    time.sleep(2)
+                    time.sleep(5)
                     for k in ['v_file','t_file','v_title','v_desc','tags']: st.session_state[k] = None if 'file' in k else ("" if k != 'tags' else [])
                     st.session_state.step = 1
                     st.rerun()
