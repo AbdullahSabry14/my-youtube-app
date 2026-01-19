@@ -169,42 +169,56 @@ elif st.session_state.step == 5:
     show_back_button()
     st.subheader("🏷️ الكلمات المفتاحية")
     
-    # --- دالة الإضافة الذكية عند الضغط على Enter ---
+    # --- التنسيق السحري للصغير جداً وجنب بعض ---
+    st.markdown("""
+        <style>
+        /* تصغير الأزرار جداً وجعلها تصف بجانب بعضها */
+        div.stButton {
+            display: inline-block !important;
+            width: auto !important;
+            margin: 1px !important;
+        }
+        div.stButton > button {
+            padding: 0px 6px !important;
+            font-size: 10px !important; /* أصغر حجم خط ممكن */
+            min-height: 22px !important;
+            height: 22px !important;
+            border-radius: 4px !important;
+            background-color: #f0f2f6 !important;
+            border: 1px solid #d1d5db !important;
+            color: black !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
     def add_tags_callback():
         raw = st.session_state.get('temp_tag_input', '')
         if raw:
-            # تقسيم النص بناءً على الفواصل
             new_tags = [t.strip() for t in raw.replace("،", ",").split(",") if t.strip()]
             for tag in new_tags:
                 if tag not in st.session_state.tags:
                     st.session_state.tags.append(tag)
-            # السر: تصفير المدخل فوراً لمنع تكرار الإضافة أو الأخطاء
             st.session_state.temp_tag_input = ""
 
-    # 1. مربع الإدخال الذكي (اكتب واضغط Enter)
-    st.text_input(
-        "الصق الكلمات هنا (افصل بفاصلة واضغط Enter):", 
-        key="temp_tag_input", 
-        on_change=add_tags_callback
-    )
+    # 1. مربع الإدخال
+    st.text_input("اكتب واضغط Enter:", key="temp_tag_input", on_change=add_tags_callback)
+
+    # 2. منطقة العرض (مرتبات جنب بعض وصغار)
+    st.write("الكلمات المعتمدة (اضغط للحذف):")
     
-    # زر الإضافة اليدوي (اختياري للي ما بدوش يضغط Enter)
-    if st.button("➕ إضافة سريع", key="btn_add_tags"):
-        add_tags_callback()
-        st.rerun()
+    # حاوية تعرض الأزرار بجانب بعضها حتى تمتلئ الشاشة ثم تنزل سطر جديد تلقائياً
+    if st.session_state.tags:
+        for i, tag in enumerate(st.session_state.tags):
+            if st.button(f"{tag} ×", key=f"t_tag_{i}_{tag}"):
+                st.session_state.tags.remove(tag)
+                st.rerun()
+    else:
+        st.caption("سيتم عرض الكلمات هنا فوراً...")
 
     st.markdown("---")
     
-    # 2. الإدخال الثاني (يظهر فيه الكلمات مباشرة ويمكنك الحذف منه)
-    st.session_state.tags = st.multiselect(
-        "🏷️ الكلمات المعتمدة (يمكنك الحذف بالضغط على x):", 
-        options=st.session_state.tags, 
-        default=st.session_state.tags,
-        key="ms_tags"
-    )
-    
     # --- زر التقدم (أقصى اليمين) ---
-    col_next_5, col_spacer_5 = st.columns([2, 10]) 
+    col_next_5, _ = st.columns([3, 9]) 
     with col_next_5:
         if st.button("التقدم ➡️", key="btn_next_step_5"):
             move(6)
