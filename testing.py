@@ -204,42 +204,38 @@ elif st.session_state.step == 4:
 
 elif st.session_state.step == 5:
     show_back_button()
-    st.subheader("🏷️ الكلمات المفتاحية")
+    st.subheader("🏷️ الكلمات المفتاحية (نظام يوتيوب)")
     
-    # 1. التنسيق الجبري - التكيف الذكي (Responsive)
+    MAX_CHARS_LIMIT = 500 
+    current_chars = sum(len(tag) for tag in st.session_state.tags)
+
+    # 1. التنسيق الجبري (Responsive) - تم تحسينه ليمنع تكسر الكلمات
     st.markdown("""
         <style>
-        /* الحاوية الكبرى - أهم تعديل لتفادي اختفاء الكلمات */
-        [data-testid="stHorizontalBlock"] {
+        /* حاوية الأزرار: تجعلها تصطف بجانب بعضها وتنزل لسطر جديد تلقائياً */
+        div.tags-container {
             display: flex !important;
-            flex-flow: row wrap !important; /* يسمح بالنزول لسطر جديد عند ضيق الشاشة */
-            gap: 5px !important; /* مسافة بسيطة بين الكلمات */
-            justify-content: flex-start !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+            margin-bottom: 20px !important;
         }
         
-        /* جعل العمود مرن وليس ثابت العرض */
-        [data-testid="column"] {
-            flex: 0 1 auto !important; /* العمود يأخذ مساحة الكلمة فقط */
-            min-width: min-content !important;
-            width: auto !important;
-        }
-
-        /* تنسيق أزرار الكلمات (الأزرق المخصص) */
+        /* استهداف كبسات الكلمات فقط */
         div.stButton > button[key^="tag_btn_"] {
             background-color: #f0f7ff !important;
             color: #0056b3 !important;
             border: 1px solid #c2dbff !important;
-            padding: 4px 12px !important;
-            font-size: 12px !important;
-            border-radius: 15px !important; /* شكل بيضاوي أجمل */
-            white-space: nowrap !important; /* يمنع كسر الكلمة الواحدة */
-            height: auto !important;
-            min-height: 32px !important;
+            padding: 5px 15px !important;
+            font-size: 14px !important; /* حجم خط أوضح */
+            border-radius: 20px !important;
+            white-space: nowrap !important; /* يمنع الكلمة من الانقسام */
+            width: auto !important; /* يجعل الزر على حجم الكلمة فقط */
+            display: inline-block !important;
         }
         
         div.stButton > button[key^="tag_btn_"]:hover {
-            background-color: #e1efff !important;
             border-color: #0056b3 !important;
+            background-color: #e1efff !important;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -247,38 +243,57 @@ elif st.session_state.step == 5:
     def add_tags_callback():
         raw = st.session_state.get('temp_tag_input', '')
         if raw:
-            new_tags = [t.strip() for t in raw.replace("،", ",").split(",") if t.strip()]
-            for tag in new_tags:
-                if tag not in st.session_state.tags:
-                    st.session_state.tags.append(tag)
+            incoming_tags = [t.strip() for t in raw.replace("،", ",").split(",") if t.strip()]
+            for tag in incoming_tags:
+                tag_len = len(tag)
+                temp_total = sum(len(t) for t in st.session_state.tags)
+                if temp_total + tag_len <= MAX_CHARS_LIMIT:
+                    if tag not in st.session_state.tags:
+                        st.session_state.tags.append(tag)
+                else:
+                    st.toast(f"⚠️ وصلت للحد الأقصى للحروف ({MAX_CHARS_LIMIT})!", icon="🛑")
+                    break
             st.session_state.temp_tag_input = ""
 
-    # 2. إدخال البيانات
-    st.text_input("اكتب واضغط Enter:", key="temp_tag_input", on_change=add_tags_callback)
+    # 2. عرض العداد
+    remaining_chars = MAX_CHARS_LIMIT - current_chars
+    counter_color = "red" if remaining_chars < 20 else "#555"
+    st.markdown(f'<p style="text-align: left; color: {counter_color};">عدد الحروف: <b>{current_chars}</b> / {MAX_CHARS_LIMIT}</p>', unsafe_allow_html=True)
 
-    # 3. عرض الكلمات (توزيع مرن)
-    st.write("الكلمات (اضغط للحذف):")
-    
+    # 3. إدخال البيانات
+    is_full = current_chars >= MAX_CHARS_LIMIT
+    st.text_input("أضف كلمات مفتاحية:", key="temp_tag_input", on_change=add_tags_callback, 
+                  placeholder="مثلاً: طبخ، وصفات..." if not is_full else "ممتلئ 🛑", disabled=is_full)
+
+    # 4. عرض الكلمات - التعديل الجوهري هنا (استخدام حاوية بدلاً من أعمدة ثابتة)
+    st.write("الكلمات المضافة:")
     tags = st.session_state.tags
     if tags:
-        # السر هنا: نستخدم columns بعدد الكلمات لكن الـ CSS فوق بيخليهم يصفوا ورا بعض وينزلوا سطر
-        cols = st.columns(len(tags))
-        for i, tag in enumerate(tags):
-            with cols[i]:
-                if st.button(f"{tag} ✕", key=f"tag_btn_{i}"):
-                    st.session_state.tags.remove(tag)
-                    st.rerun()
+        # إنشاء منطقة مرنة للأزرار
+        with st.container():
+            # نستخدم سطر واحد (columns) بعدد ضخم أو مجرد عرض متتالي
+            # الأفضل لستريمليت هو وضعهم في "rows" مرنة داخل الحاوية
+            tag_cols = st.columns(10) # نفتح عدد أعمدة كافي والـ CSS يتكفل بالباقي
+            for i, tag in enumerate(tags):
+                # نوزع الكلمات بشكل متتالي، والـ CSS (tags-container) هو اللي برتبهم
+                with tag_cols[i % 10]: # هذا يوزعهم بشكل منظم والـ CSS يمنع ضغطهم
+                    if st.button(f"{tag} ✕", key=f"tag_btn_{i}"):
+                        st.session_state.tags.remove(tag)
+                        st.rerun()
     else:
-        st.caption("لا توجد كلمات حالياً.")
+        st.caption("لم يتم إضافة أي كلمات بعد.")
 
     st.divider()
     
-    # 4. زر التقدم
+    # 5. زر التقدم
     col_next_5, _ = st.columns([3, 9]) 
     with col_next_5:
         if st.button("التقدم ➡️", key="btn_next_5"):
-            move(6)
-            st.rerun()
+            if current_chars > 0:
+                move(6)
+                st.rerun()
+            else:
+                st.error("أضف كلمة واحدة على الأقل!")
 elif st.session_state.step == 6:
     show_back_button()
     st.subheader("🕒 إعدادات النشر النهائية")
