@@ -206,16 +206,16 @@ elif st.session_state.step == 5:
     show_back_button()
     st.subheader("🏷️ الكلمات المفتاحية")
     
-    # 1. التنسيق الجبري - إجبار التوزيع الأفقي وتصفير الفراغات الزائدة
+    # 1. التنسيق الجبري - استهداف أزرار الكلمات فقط وتعديل مظهرها وتلزيقها
     st.markdown("""
         <style>
-        /* إجبار الأعمدة تضل جنب بعض حتى في التلفون */
+        /* إجبار الأعمدة تضل جنب بعض (6 في الصف) حتى في التلفون */
         [data-testid="stHorizontalBlock"] {
             display: flex !important;
             flex-direction: row !important;
             flex-wrap: nowrap !important;
-            gap: 4px !important; /* مسافة بسيطة جداً بين الكبسات */
-            margin-bottom: -15px !important; /* تقليل الفراغ بين الأسطر */
+            gap: 2px !important; /* مسافة شعرة للتلزيق */
+            margin-bottom: -10px !important;
         }
         
         [data-testid="column"] {
@@ -223,15 +223,25 @@ elif st.session_state.step == 5:
             min-width: 0 !important;
         }
 
-        /* تنسيق الزر - يبقى بالشكل العادي لكن بحجم متناسق */
-        div.stButton > button {
+        /* تنسيق أزرار الكلمات فقط - تغيير اللون لشكل مميز */
+        /* استخدمت محدد خاص لضمان عدم التأثير على أزرار التنقل */
+        div.stButton > button[key^="tag_btn_"] {
+            background-color: #f0f7ff !important; /* لون أزرق باهت جداً */
+            color: #0056b3 !important;           /* لون الخط أزرق */
+            border: 1px solid #c2dbff !important;
             width: 100% !important;
             padding: 2px 2px !important;
-            font-size: 11px !important;
+            font-size: 10px !important; /* حجم خط مناسب للتلفون */
+            border-radius: 8px !important;
             white-space: nowrap !important;
             overflow: hidden;
-            text-overflow: ellipsis;
-            height: 32px !important; /* توحيد الطول لجميع الكبسات */
+            text-overflow: clip;
+            height: 30px !important;
+        }
+        
+        div.stButton > button[key^="tag_btn_"]:hover {
+            background-color: #e1efff !important;
+            border-color: #0056b3 !important;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -258,7 +268,7 @@ elif st.session_state.step == 5:
             cols = st.columns(6) 
             for j, tag in enumerate(row_tags):
                 with cols[j]:
-                    # الزر بالشكل الافتراضي (رمادي بحدود)
+                    # ملاحظة: الـ key يبدأ بـ tag_btn_ ليتعرف عليه الـ CSS المخصص فوق
                     if st.button(f"{tag} ✕", key=f"tag_btn_{i+j}"):
                         st.session_state.tags.remove(tag)
                         st.rerun()
@@ -267,7 +277,7 @@ elif st.session_state.step == 5:
 
     st.divider()
     
-    # 4. زر التقدم
+    # 4. زر التقدم (لن يتأثر باللون الأزرق لأنه لا يبدأ بـ tag_btn_)
     col_next_5, _ = st.columns([3, 9]) 
     with col_next_5:
         if st.button("التقدم ➡️", key="btn_next_5"):
