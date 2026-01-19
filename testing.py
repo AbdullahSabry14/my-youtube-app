@@ -164,45 +164,83 @@ elif st.session_state.step == 4:
     st.subheader("📝 وصف الفيديو")
     if st.session_state.show_err and not st.session_state.v_desc.strip(): st.warning("الرجاء كتابة الوصف!")
     st.session_state.v_desc = st.text_area("وصف الفيديو", value=st.session_state.v_desc, height=200, key="desc_box")
+# elif st.session_state.step == 5:
+#     show_back_button()
+#     st.subheader("🏷️ الكلمات المفتاحية")
+    
+#     def add_tags_callback():
+#         raw = st.session_state.get('temp_tag_input', '')
+#         if raw:
+#             new_tags = [t.strip() for t in raw.replace("،", ",").split(",") if t.strip()]
+#             for tag in new_tags:
+#                 if tag not in st.session_state.tags:
+#                     st.session_state.tags.append(tag)
+#             st.session_state.temp_tag_input = ""
+
+#     st.text_input("الصق الكلمات هنا (افصل بفاصلة):", 
+#                   key="temp_tag_input", 
+#                   on_change=add_tags_callback)
+    
+#     if st.button("➕ إضافة", key="btn_add_tags"):
+#         add_tags_callback()
+#         st.rerun()
+
+#     st.markdown("---")
+    
+#     st.session_state.tags = st.multiselect(
+#         "🏷️ الكلمات المعتمدة:", 
+#         options=st.session_state.tags, 
+#         default=st.session_state.tags,
+#         key="ms_tags"
+#     )
+    
+#     # --- زر التقدم لصفحة 5 (تعديل الترتيب لليمين) ---
+#     col_next_5, col_spacer_5 = st.columns([2, 10]) 
+#     with col_next_5:
+#         if st.button("التقدم ➡️", key="btn_next_step_5"):
+#             move(6)
+#             st.rerun()
 
 elif st.session_state.step == 5:
     show_back_button()
     st.subheader("🏷️ الكلمات المفتاحية")
     
-    # 1. التنسيق الجبري - إجبار الـ 6 أعمدة في التلفون
+    # 1. التنسيق الجبري - استهداف أزرار الكلمات فقط وتعديل مظهرها وتلزيقها
     st.markdown("""
         <style>
-        /* أهم سطر: يمنع ستريمليت من قلب الأعمدة تحت بعض في الموبايل */
+        /* إجبار الأعمدة تضل جنب بعض (6 في الصف) حتى في التلفون */
         [data-testid="stHorizontalBlock"] {
             display: flex !important;
             flex-direction: row !important;
-            flex-wrap: nowrap !important; /* يمنع النزول لسطر جديد داخل الصف الواحد */
-            gap: 2px !important; /* تقليل المسافة جداً لتكفي الشاشة */
+            flex-wrap: nowrap !important;
+            gap: 2px !important; /* مسافة شعرة للتلزيق */
+            margin-bottom: -10px !important;
         }
         
         [data-testid="column"] {
-            width: 16% !important; /* تقريباً سدس العرض */
-            min-width: unset !important;
             flex: 1 1 0% !important;
+            min-width: 0 !important;
         }
 
-        /* تنسيق الأزرار (شفاف وبدون مسافات) */
-        div.stButton > button {
-            background-color: transparent !important;
-            color: #24292e !important;
-            border: 1px solid #d1d5da !important;
-            padding: 2px 2px !important; /* تقليل الحواف الداخلية للحد الأدنى */
-            border-radius: 5px !important;
-            font-size: 10px !important; /* تصغير الخط قليلاً ليناسب شاشة الجوال */
+        /* تنسيق أزرار الكلمات فقط - تغيير اللون لشكل مميز */
+        /* استخدمت محدد خاص لضمان عدم التأثير على أزرار التنقل */
+        div.stButton > button[key^="tag_btn_"] {
+            background-color: #f0f7ff !important; /* لون أزرق باهت جداً */
+            color: #0056b3 !important;           /* لون الخط أزرق */
+            border: 1px solid #c2dbff !important;
             width: 100% !important;
+            padding: 2px 2px !important;
+            font-size: 10px !important; /* حجم خط مناسب للتلفون */
+            border-radius: 8px !important;
             white-space: nowrap !important;
             overflow: hidden;
-            text-overflow: clip; /* قص النص الزائد */
+            text-overflow: clip;
+            height: 30px !important;
         }
         
-        div.stButton > button:hover {
-            border-color: #0366d6 !important;
-            color: #0366d6 !important;
+        div.stButton > button[key^="tag_btn_"]:hover {
+            background-color: #e1efff !important;
+            border-color: #0056b3 !important;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -219,8 +257,8 @@ elif st.session_state.step == 5:
     # 2. إدخال البيانات
     st.text_input("اكتب واضغط Enter:", key="temp_tag_input", on_change=add_tags_callback)
 
-    # 3. عرض الكلمات (6 كلمات في كل سطر غصب عن التلفون)
-    st.write("الكلمات:")
+    # 3. عرض الكلمات (6 كلمات في كل صف)
+    st.write("الكلمات (اضغط للحذف):")
     
     tags = st.session_state.tags
     if tags:
@@ -229,8 +267,8 @@ elif st.session_state.step == 5:
             cols = st.columns(6) 
             for j, tag in enumerate(row_tags):
                 with cols[j]:
-                    # حذف الكلمة عند الضغط
-                    if st.button(f"{tag}✕", key=f"tag_btn_{i+j}"):
+                    # ملاحظة: الـ key يبدأ بـ tag_btn_ ليتعرف عليه الـ CSS المخصص فوق
+                    if st.button(f"{tag} ✕", key=f"tag_btn_{i+j}"):
                         st.session_state.tags.remove(tag)
                         st.rerun()
     else:
@@ -238,12 +276,13 @@ elif st.session_state.step == 5:
 
     st.divider()
     
-    # 4. زر التقدم
+    # 4. زر التقدم (لن يتأثر باللون الأزرق لأنه لا يبدأ بـ tag_btn_)
     col_next_5, _ = st.columns([3, 9]) 
     with col_next_5:
         if st.button("التقدم ➡️", key="btn_next_5"):
             move(6)
             st.rerun()
+
 elif st.session_state.step == 6:
     show_back_button()
     st.subheader("🕒 إعدادات النشر النهائية")
