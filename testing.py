@@ -169,24 +169,27 @@ elif st.session_state.step == 5:
     show_back_button()
     st.subheader("🏷️ الكلمات المفتاحية")
     
-    # --- التنسيق السحري للصغير جداً وجنب بعض ---
+    # تنسيق الـ Chips عشان تظهر جنب بعض وصغيرة جداً
     st.markdown("""
         <style>
-        /* تصغير الأزرار جداً وجعلها تصف بجانب بعضها */
-        div.stButton {
-            display: inline-block !important;
-            width: auto !important;
-            margin: 1px !important;
+        .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            padding: 5px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 5px;
         }
-        div.stButton > button {
-            padding: 0px 6px !important;
-            font-size: 10px !important; /* أصغر حجم خط ممكن */
-            min-height: 22px !important;
-            height: 22px !important;
-            border-radius: 4px !important;
-            background-color: #f0f2f6 !important;
-            border: 1px solid #d1d5db !important;
-            color: black !important;
+        .tag-chip {
+            background-color: #f0f2f6;
+            color: #31333F;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            display: inline-flex;
+            align-items: center;
+            border: 1px solid #ddd;
+            margin-bottom: 2px;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -203,21 +206,28 @@ elif st.session_state.step == 5:
     # 1. مربع الإدخال
     st.text_input("اكتب واضغط Enter:", key="temp_tag_input", on_change=add_tags_callback)
 
-    # 2. منطقة العرض (مرتبات جنب بعض وصغار)
-    st.write("الكلمات المعتمدة (اضغط للحذف):")
+    # 2. منطقة العرض الذكية
+    st.write("الكلمات (اضغط على × للحذف):")
     
-    # حاوية تعرض الأزرار بجانب بعضها حتى تمتلئ الشاشة ثم تنزل سطر جديد تلقائياً
+    # بنعرض الكلمات كأزرار Streamlit بس بنجبرها تصف جنب بعض بكود CSS خارق
+    st.markdown('<div class="tag-container">', unsafe_allow_html=True)
+    
+    # الحيلة هنا: بنستخدم columns عددها كبير جداً عشان نجبرهم يلزقوا ببعض
     if st.session_state.tags:
-        for i, tag in enumerate(st.session_state.tags):
-            if st.button(f"{tag} ×", key=f"t_tag_{i}_{tag}"):
-                st.session_state.tags.remove(tag)
-                st.rerun()
+        # بنعمل صفوف، كل صف فيه 4 أعمدة صغيرة جداً
+        rows = [st.session_state.tags[i:i + 4] for i in range(0, len(st.session_state.tags), 4)]
+        for row in rows:
+            cols = st.columns([1,1,1,1,2]) # أعمدة ضيقة جداً
+            for idx, tag in enumerate(row):
+                if cols[idx].button(f"{tag} ×", key=f"btn_{tag}_{idx}"):
+                    st.session_state.tags.remove(tag)
+                    st.rerun()
     else:
-        st.caption("سيتم عرض الكلمات هنا فوراً...")
+        st.caption("لا يوجد كلمات.")
 
     st.markdown("---")
     
-    # --- زر التقدم (أقصى اليمين) ---
+    # --- زر التقدم ---
     col_next_5, _ = st.columns([3, 9]) 
     with col_next_5:
         if st.button("التقدم ➡️", key="btn_next_step_5"):
