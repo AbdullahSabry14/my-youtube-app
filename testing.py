@@ -169,27 +169,28 @@ elif st.session_state.step == 5:
     show_back_button()
     st.subheader("🏷️ الكلمات المفتاحية")
     
-    # تنسيق الـ Chips عشان تظهر جنب بعض وصغيرة جداً
+    # 1. التنسيق الجبري - هذا الكود بيخلي الكلمات "Chips" جنب بعض غصب عن التلفون
     st.markdown("""
         <style>
-        .tag-container {
+        .tag-box {
             display: flex;
             flex-wrap: wrap;
-            gap: 4px;
-            padding: 5px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 5px;
+            gap: 6px;
+            padding: 10px 0;
         }
-        .tag-chip {
-            background-color: #f0f2f6;
-            color: #31333F;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            display: inline-flex;
-            align-items: center;
-            border: 1px solid #ddd;
-            margin-bottom: 2px;
+        .tag-item {
+            display: inline-block;
+            background-color: #e1e4e8;
+            color: #24292e !important;
+            padding: 2px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            text-decoration: none !important;
+            border: 1px solid #d1d5da;
+            white-space: nowrap;
+        }
+        .tag-item:hover {
+            background-color: #d1d5da;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -203,34 +204,37 @@ elif st.session_state.step == 5:
                     st.session_state.tags.append(tag)
             st.session_state.temp_tag_input = ""
 
-    # 1. مربع الإدخال
+    # 2. إدخال البيانات
     st.text_input("اكتب واضغط Enter:", key="temp_tag_input", on_change=add_tags_callback)
 
-    # 2. منطقة العرض الذكية
-    st.write("الكلمات (اضغط على × للحذف):")
+    # 3. عرض الكلمات (جنب بعض)
+    st.write("الكلمات (المس الكلمة لحذفها):")
     
-    # بنعرض الكلمات كأزرار Streamlit بس بنجبرها تصف جنب بعض بكود CSS خارق
-    st.markdown('<div class="tag-container">', unsafe_allow_html=True)
-    
-    # الحيلة هنا: بنستخدم columns عددها كبير جداً عشان نجبرهم يلزقوا ببعض
-    if st.session_state.tags:
-        # بنعمل صفوف، كل صف فيه 4 أعمدة صغيرة جداً
-        rows = [st.session_state.tags[i:i + 4] for i in range(0, len(st.session_state.tags), 4)]
-        for row in rows:
-            cols = st.columns([1,1,1,1,2]) # أعمدة ضيقة جداً
-            for idx, tag in enumerate(row):
-                if cols[idx].button(f"{tag} ×", key=f"btn_{tag}_{idx}"):
-                    st.session_state.tags.remove(tag)
-                    st.rerun()
-    else:
-        st.caption("لا يوجد كلمات.")
+    # ميزة الحذف عن طريق الـ Query Params لأن الأزرار العادية بتخرب الترتيب
+    query_params = st.query_params
+    if "del_tag" in query_params:
+        tag_to_del = query_params["del_tag"]
+        if tag_to_del in st.session_state.tags:
+            st.session_state.tags.remove(tag_to_del)
+            # تنظيف الرابط بعد الحذف
+            st.query_params.clear()
+            st.rerun()
 
-    st.markdown("---")
+    # بناء سطر الـ HTML للكلمات
+    tags_html = '<div class="tag-box">'
+    for tag in st.session_state.tags:
+        # الرابط بيضيف اسم الكلمة للرابط عشان نعرف شو نحذف
+        tags_html += f'<a href="?del_tag={tag}" class="tag-item">{tag} ✕</a>'
+    tags_html += '</div>'
     
-    # --- زر التقدم ---
+    st.markdown(tags_html, unsafe_allow_html=True)
+
+    st.divider()
+    
+    # 4. زر التقدم
     col_next_5, _ = st.columns([3, 9]) 
     with col_next_5:
-        if st.button("التقدم ➡️", key="btn_next_step_5"):
+        if st.button("التقدم ➡️", key="btn_next_5"):
             move(6)
             st.rerun()
 elif st.session_state.step == 6:
