@@ -206,37 +206,35 @@ elif st.session_state.step == 5:
     show_back_button()
     st.subheader("🏷️ الكلمات المفتاحية")
     
-    # 1. التنسيق الجبري - استهداف أزرار الكلمات فقط وتعديل مظهرها وتلزيقها
+    # 1. التنسيق الجبري - التكيف الذكي (Responsive)
     st.markdown("""
         <style>
-        /* إجبار الأعمدة تضل جنب بعض (6 في الصف) حتى في التلفون */
+        /* الحاوية الكبرى - أهم تعديل لتفادي اختفاء الكلمات */
         [data-testid="stHorizontalBlock"] {
             display: flex !important;
-            flex-direction: row !important;
-            flex-wrap: nowrap !important;
-            gap: 2px !important; /* مسافة شعرة للتلزيق */
-            margin-bottom: -10px !important;
+            flex-flow: row wrap !important; /* يسمح بالنزول لسطر جديد عند ضيق الشاشة */
+            gap: 5px !important; /* مسافة بسيطة بين الكلمات */
+            justify-content: flex-start !important;
         }
         
+        /* جعل العمود مرن وليس ثابت العرض */
         [data-testid="column"] {
-            flex: 1 1 0% !important;
-            min-width: 0 !important;
+            flex: 0 1 auto !important; /* العمود يأخذ مساحة الكلمة فقط */
+            min-width: min-content !important;
+            width: auto !important;
         }
 
-        /* تنسيق أزرار الكلمات فقط - تغيير اللون لشكل مميز */
-        /* استخدمت محدد خاص لضمان عدم التأثير على أزرار التنقل */
+        /* تنسيق أزرار الكلمات (الأزرق المخصص) */
         div.stButton > button[key^="tag_btn_"] {
-            background-color: #f0f7ff !important; /* لون أزرق باهت جداً */
-            color: #0056b3 !important;           /* لون الخط أزرق */
+            background-color: #f0f7ff !important;
+            color: #0056b3 !important;
             border: 1px solid #c2dbff !important;
-            width: 100% !important;
-            padding: 2px 2px !important;
-            font-size: 10px !important; /* حجم خط مناسب للتلفون */
-            border-radius: 8px !important;
-            white-space: nowrap !important;
-            overflow: hidden;
-            text-overflow: clip;
-            height: 30px !important;
+            padding: 4px 12px !important;
+            font-size: 12px !important;
+            border-radius: 15px !important; /* شكل بيضاوي أجمل */
+            white-space: nowrap !important; /* يمنع كسر الكلمة الواحدة */
+            height: auto !important;
+            min-height: 32px !important;
         }
         
         div.stButton > button[key^="tag_btn_"]:hover {
@@ -258,26 +256,24 @@ elif st.session_state.step == 5:
     # 2. إدخال البيانات
     st.text_input("اكتب واضغط Enter:", key="temp_tag_input", on_change=add_tags_callback)
 
-    # 3. عرض الكلمات (6 كلمات في كل صف)
+    # 3. عرض الكلمات (توزيع مرن)
     st.write("الكلمات (اضغط للحذف):")
     
     tags = st.session_state.tags
     if tags:
-        for i in range(0, len(tags), 6):
-            row_tags = tags[i:i+6]
-            cols = st.columns(6) 
-            for j, tag in enumerate(row_tags):
-                with cols[j]:
-                    # ملاحظة: الـ key يبدأ بـ tag_btn_ ليتعرف عليه الـ CSS المخصص فوق
-                    if st.button(f"{tag} ✕", key=f"tag_btn_{i+j}"):
-                        st.session_state.tags.remove(tag)
-                        st.rerun()
+        # السر هنا: نستخدم columns بعدد الكلمات لكن الـ CSS فوق بيخليهم يصفوا ورا بعض وينزلوا سطر
+        cols = st.columns(len(tags))
+        for i, tag in enumerate(tags):
+            with cols[i]:
+                if st.button(f"{tag} ✕", key=f"tag_btn_{i}"):
+                    st.session_state.tags.remove(tag)
+                    st.rerun()
     else:
         st.caption("لا توجد كلمات حالياً.")
 
     st.divider()
     
-    # 4. زر التقدم (لن يتأثر باللون الأزرق لأنه لا يبدأ بـ tag_btn_)
+    # 4. زر التقدم
     col_next_5, _ = st.columns([3, 9]) 
     with col_next_5:
         if st.button("التقدم ➡️", key="btn_next_5"):
