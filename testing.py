@@ -164,43 +164,51 @@ elif st.session_state.step == 4:
     st.subheader("📝 وصف الفيديو")
     if st.session_state.show_err and not st.session_state.v_desc.strip(): st.warning("الرجاء كتابة الوصف!")
     st.session_state.v_desc = st.text_area("وصف الفيديو", value=st.session_state.v_desc, height=200, key="desc_box")
+
 elif st.session_state.step == 5:
     show_back_button()
     st.subheader("🏷️ الكلمات المفتاحية")
     
+    # --- دالة الإضافة الذكية عند الضغط على Enter ---
     def add_tags_callback():
         raw = st.session_state.get('temp_tag_input', '')
         if raw:
+            # تقسيم النص بناءً على الفواصل
             new_tags = [t.strip() for t in raw.replace("،", ",").split(",") if t.strip()]
             for tag in new_tags:
                 if tag not in st.session_state.tags:
                     st.session_state.tags.append(tag)
+            # السر: تصفير المدخل فوراً لمنع تكرار الإضافة أو الأخطاء
             st.session_state.temp_tag_input = ""
 
-    st.text_input("الصق الكلمات هنا (افصل بفاصلة):", 
-                  key="temp_tag_input", 
-                  on_change=add_tags_callback)
+    # 1. مربع الإدخال الذكي (اكتب واضغط Enter)
+    st.text_input(
+        "الصق الكلمات هنا (افصل بفاصلة واضغط Enter):", 
+        key="temp_tag_input", 
+        on_change=add_tags_callback
+    )
     
-    if st.button("➕ إضافة", key="btn_add_tags"):
+    # زر الإضافة اليدوي (اختياري للي ما بدوش يضغط Enter)
+    if st.button("➕ إضافة سريع", key="btn_add_tags"):
         add_tags_callback()
         st.rerun()
 
     st.markdown("---")
     
+    # 2. الإدخال الثاني (يظهر فيه الكلمات مباشرة ويمكنك الحذف منه)
     st.session_state.tags = st.multiselect(
-        "🏷️ الكلمات المعتمدة:", 
+        "🏷️ الكلمات المعتمدة (يمكنك الحذف بالضغط على x):", 
         options=st.session_state.tags, 
         default=st.session_state.tags,
         key="ms_tags"
     )
     
-    # --- زر التقدم لصفحة 5 (تعديل الترتيب لليمين) ---
+    # --- زر التقدم (أقصى اليمين) ---
     col_next_5, col_spacer_5 = st.columns([2, 10]) 
     with col_next_5:
         if st.button("التقدم ➡️", key="btn_next_step_5"):
             move(6)
             st.rerun()
-
 elif st.session_state.step == 6:
     show_back_button()
     st.subheader("🕒 إعدادات النشر النهائية")
