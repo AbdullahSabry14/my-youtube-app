@@ -204,15 +204,14 @@ elif st.session_state.step == 4:
 
 elif st.session_state.step == 5:
     show_back_button()
-    st.subheader("🏷️ الكلمات المفتاحية (نظام يوتيوب)")
+    st.subheader("🏷️ الكلمات المفتاحية")
     
     MAX_CHARS_LIMIT = 500 
     current_chars = sum(len(tag) for tag in st.session_state.tags)
 
-    # 1. التنسيق الجبري (Responsive) - تم تحسينه ليمنع تكسر الكلمات
+    # 1. التنسيق الجبري (Responsive)
     st.markdown("""
         <style>
-        /* حاوية الأزرار: تجعلها تصطف بجانب بعضها وتنزل لسطر جديد تلقائياً */
         div.tags-container {
             display: flex !important;
             flex-wrap: wrap !important;
@@ -220,16 +219,15 @@ elif st.session_state.step == 5:
             margin-bottom: 20px !important;
         }
         
-        /* استهداف كبسات الكلمات فقط */
         div.stButton > button[key^="tag_btn_"] {
             background-color: #f0f7ff !important;
             color: #0056b3 !important;
             border: 1px solid #c2dbff !important;
             padding: 5px 15px !important;
-            font-size: 14px !important; /* حجم خط أوضح */
+            font-size: 14px !important;
             border-radius: 20px !important;
-            white-space: nowrap !important; /* يمنع الكلمة من الانقسام */
-            width: auto !important; /* يجعل الزر على حجم الكلمة فقط */
+            white-space: nowrap !important;
+            width: auto !important;
             display: inline-block !important;
         }
         
@@ -260,23 +258,24 @@ elif st.session_state.step == 5:
     counter_color = "red" if remaining_chars < 20 else "#555"
     st.markdown(f'<p style="text-align: left; color: {counter_color};">عدد الحروف: <b>{current_chars}</b> / {MAX_CHARS_LIMIT}</p>', unsafe_allow_html=True)
 
-    # 3. إدخال البيانات
+    # 3. إدخال البيانات (تم إزالة المثال التلقائي placeholder)
     is_full = current_chars >= MAX_CHARS_LIMIT
-    st.text_input("أضف كلمات مفتاحية:", key="temp_tag_input", on_change=add_tags_callback, 
-                  placeholder="مثلاً: طبخ، وصفات..." if not is_full else "ممتلئ 🛑", disabled=is_full)
+    st.text_input(
+        "أضف كلمات مفتاحية:", 
+        key="temp_tag_input", 
+        on_change=add_tags_callback, 
+        placeholder="" if not is_full else "ممتلئ 🛑", 
+        disabled=is_full
+    )
 
-    # 4. عرض الكلمات - التعديل الجوهري هنا (استخدام حاوية بدلاً من أعمدة ثابتة)
+    # 4. عرض الكلمات
     st.write("الكلمات المضافة:")
     tags = st.session_state.tags
     if tags:
-        # إنشاء منطقة مرنة للأزرار
         with st.container():
-            # نستخدم سطر واحد (columns) بعدد ضخم أو مجرد عرض متتالي
-            # الأفضل لستريمليت هو وضعهم في "rows" مرنة داخل الحاوية
-            tag_cols = st.columns(10) # نفتح عدد أعمدة كافي والـ CSS يتكفل بالباقي
+            tag_cols = st.columns(10)
             for i, tag in enumerate(tags):
-                # نوزع الكلمات بشكل متتالي، والـ CSS (tags-container) هو اللي برتبهم
-                with tag_cols[i % 10]: # هذا يوزعهم بشكل منظم والـ CSS يمنع ضغطهم
+                with tag_cols[i % 10]:
                     if st.button(f"{tag} ✕", key=f"tag_btn_{i}"):
                         st.session_state.tags.remove(tag)
                         st.rerun()
