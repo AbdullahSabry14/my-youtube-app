@@ -33,7 +33,7 @@ if 'step' not in st.session_state:
 # --- 3. جلب الـ ID من الرابط ---
 URL = st.query_params.get("id")
 # print(URL)
-f = Fernet(st.secrets("KEY").encode())
+f = Fernet(st.secrets["KEY"].encode())
 # f = Fernet("FiNtMInhiXUZNVbOud6yDJKHB6-lEjZfIq3nLPsuAmY=".encode())
 # print(f)
 
@@ -471,3 +471,4 @@ else :
 
 st.markdown("---")
 st.caption(" نظام أبو الصبري - المطور عبدالله  2026  © ")
+
