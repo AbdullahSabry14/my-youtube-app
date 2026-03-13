@@ -152,7 +152,7 @@ if not URL :
     st.markdown("<h1 style='text-align: center;'>🔗 ربط قناة يوتيوب الجديدة</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center;'>قم بربط قناتك للحصول على رابط الرفع الخاص بك</p>", unsafe_allow_html=True)
     st.write("اضغط لتسجيل الدخول لقناتك للقدرة على التحكم ونشر فيديوهاتك :")
-    current_url = st.query_params.get("base_url")
+    current_url = "https://sabry-youtube.streamlit.app/"
     scopes = ["https://www.googleapis.com/auth/youtube", 
             "https://www.googleapis.com/auth/youtube.upload", 
             "https://www.googleapis.com/auth/youtube.force-ssl",
