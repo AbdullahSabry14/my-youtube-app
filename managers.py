@@ -163,8 +163,7 @@ if not URL :
     # القفل البرمجي: "token_fetched" يمنع الكود من محاولة استخدام الـ code مجدداً بعد نجاح العملية
     if code and "token_fetched" not in st.session_state:
         try:
-            flow = Flow.from_client_config(json.loads(st.secrets["G_CRED"]), scopes,redirect_uri = current_url) 
-            st.session_state.flow = flow
+            flow = st.session_state.flow
             flow.fetch_token(code=code)
             creds = flow.credentials
             
@@ -188,7 +187,8 @@ if not URL :
         try:
             # flow = InstalledAppFlow.from_client_secrets_file("credentials.json", scopes)
             # creds = flow.run_local_server(port=0)  
-            flow = st.session_state.flow
+            flow = Flow.from_client_config(json.loads(st.secrets["G_CRED"]), scopes,redirect_uri = current_url) 
+            st.session_state.flow = flow
             auth_url, _ = flow.authorization_url(prompt='consent')
             st.markdown(f"### [اضغط هنا لتسجيل الدخول لقناتك]({auth_url})")
             st.stop()
