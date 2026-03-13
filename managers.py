@@ -152,6 +152,7 @@ if not URL :
     st.markdown("<h1 style='text-align: center;'>🔗 ربط قناة يوتيوب الجديدة</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center;'>قم بربط قناتك للحصول على رابط الرفع الخاص بك</p>", unsafe_allow_html=True)
     st.write("اضغط لتسجيل الدخول لقناتك للقدرة على التحكم ونشر فيديوهاتك :")
+    current_url = st.query_params.get("base_url")
     scopes = ["https://www.googleapis.com/auth/youtube", 
             "https://www.googleapis.com/auth/youtube.upload", 
             "https://www.googleapis.com/auth/youtube.force-ssl",
@@ -182,8 +183,7 @@ if not URL :
     if st.button("🚀 تسجيل الدخول وربط القناة الآن", use_container_width=True):
         try:
             # flow = InstalledAppFlow.from_client_secrets_file("credentials.json", scopes)
-            # creds = flow.run_local_server(port=0)            
-            current_url = "https://sabry-youtube.streamlit.app/" 
+            # creds = flow.run_local_server(port=0)             
             flow = Flow.from_client_config(json.loads(st.secrets["G_CRED"]), scopes,redirect_uri = current_url)   
             auth_url, _ = flow.authorization_url(prompt='consent')
             st.markdown(f"### [اضغط هنا لتسجيل الدخول لقناتك]({auth_url})")
