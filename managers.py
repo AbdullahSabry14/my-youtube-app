@@ -17,6 +17,7 @@ from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import Flow
 
 os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"
+os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
 # --- 1. إعدادات الصفحة ---
 st.set_page_config(page_title="المساعد المنطقي", page_icon="🤖", layout="wide")
