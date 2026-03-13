@@ -13,7 +13,8 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 from google.auth.transport.requests import Request
-from google_auth_oauthlib.flow import InstalledAppFlow
+# from google_auth_oauthlib.flow import InstalledAppFlow
+from google_auth_oauthlib.flow import Flow
 
 os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"
 
@@ -158,26 +159,35 @@ if not URL :
                 "https://www.googleapis.com/auth/youtube.upload", 
                 "https://www.googleapis.com/auth/youtube.force-ssl",
                 "https://www.googleapis.com/auth/userinfo.email"]
-            flow = InstalledAppFlow.from_client_secrets_file("credentials.json", scopes)            
-            creds = flow.run_local_server(port=0)
-            t = f.encrypt(creds.to_json().encode()).decode()
-            if os.path.exists("database.json") :
-                with open("database.json", "r") as file :
-                    data = json.load(file)
-            else :
-                data = {}
-            # print(creds)
-            a = t[:5]
-            ID = str(f"user_{a}")
-            data[ID] = t
-            with open("database.json", "w") as file :
-                    json.dump(data, file, indent=4)
-            st.success("✅ تم الربط بنجاح")
-            final_link = f"https://sabry-youtube.streamlit.app/?id={ID}"
-            
-            st.divider()
-            st.subheader("🔗 رابط الرفع الخاص بك :")
-            st.code(final_link)        
+            # flow = InstalledAppFlow.from_client_secrets_file("credentials.json", scopes)
+            # creds = flow.run_local_server(port=0)            
+            flow = Flow.from_client_config("q.json", scopes)   
+            current_url = st.query_params.get("base_url") 
+            flow.redirect_uri = current_url
+            auth_url, _ = flow.authorization_url(prompt='consent')
+            st.markdown(f"### [اضغط هنا لتسجيل الدخول لقناتك]({auth_url})")
+            code = st.query_params.get("code")
+            if code:
+                flow.fetch_token(code=code)
+                creds = flow.credentials        
+                t = f.encrypt(creds.to_json().encode()).decode()
+                if os.path.exists("database.json") :
+                    with open("database.json", "r") as file :
+                        data = json.load(file)      
+                else :
+                    data = {}
+                # print(creds)
+                a = t[:5]
+                ID = str(f"user_{a}")
+                data[ID] = t
+                with open("database.json", "w") as file :
+                        json.dump(data, file, indent=4)
+                st.success("✅ تم الربط بنجاح")
+                final_link = f"{current_url}?id={ID}"
+                
+                st.divider()
+                st.subheader("🔗 رابط الرفع الخاص بك :")
+                st.code(final_link)        
         except Exception as e:
             st.error(f"❌ فشل الربط: {e}")
             st.info("تأكد من وجود ملف database.json في مجلد المشروع.")
@@ -471,4 +481,3 @@ else :
 
 st.markdown("---")
 st.caption(" نظام أبو الصبري - المطور عبدالله  2026  © ")
-
