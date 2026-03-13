@@ -176,6 +176,7 @@ if not URL :
     if code and "token_fetched" not in st.session_state:
         try:
             flow = st.session_state.flow
+            flow = Flow.from_client_config(json.loads(st.secrets["G_CRED"]), scopes,redirect_uri = current_url)
             flow.fetch_token(code=code)
             creds = flow.credentials
             
