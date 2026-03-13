@@ -160,7 +160,7 @@ if not URL :
         try:
             # flow = InstalledAppFlow.from_client_secrets_file("credentials.json", scopes)
             # creds = flow.run_local_server(port=0)            
-            current_url = st.query_params.get("base_url") 
+            current_url = "https://sabry-youtube.streamlit.app/" 
             flow = Flow.from_client_config(json.loads(st.secrets["G_CRED"]), scopes,redirect_uri = current_url)   
             auth_url, _ = flow.authorization_url(prompt='consent')
             st.markdown(f"### [اضغط هنا لتسجيل الدخول لقناتك]({auth_url})")
