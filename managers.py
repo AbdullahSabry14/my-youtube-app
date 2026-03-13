@@ -156,30 +156,27 @@ if not URL :
     scopes = ["https://www.googleapis.com/auth/youtube", 
             "https://www.googleapis.com/auth/youtube.upload", 
             "https://www.googleapis.com/auth/youtube.force-ssl",
-            "https://www.googleapis.com/auth/userinfo.email"]
-    code = st.query_params.get("code")
-    if code:
-        flow = Flow.from_client_config(json.loads(st.secrets["G_CRED"]), scopes,redirect_uri = current_url)   
-        flow.fetch_token(code=code)
-        creds = flow.credentials        
-        t = f.encrypt(creds.to_json().encode()).decode()
-        if os.path.exists("database.json") :
-            with open("database.json", "r") as file :
-                data = json.load(file)      
-        else :
-            data = {}
-        # print(creds)
-        a = t[:5]
-        ID = str(f"user_{a}")
-        data[ID] = t
-        with open("database.json", "w") as file :
-                json.dump(data, file, indent=4)
-        st.success("✅ تم الربط بنجاح")
-        final_link = f"{current_url}?id={ID}"        
-        st.divider()
-        st.subheader("🔗 رابط الرفع الخاص بك :")
-        st.code(final_link)        
-
+            "https://www.googleapis.com/auth/userinfo.email"]    
+        code = st.query_params.get("code")
+        if code and "token_fetched" not in st.session_state:
+            try:
+                flow = Flow.from_client_config(json.loads(st.secrets["G_CRED"]), scopes, redirect_uri=REDIRECT_URI)
+                flow.fetch_token(code=code)
+                creds = flow.credentials
+                t = f.encrypt(creds.to_json().encode()).decode()
+                data = json.load(open("database.json", "r")) if os.path.exists("database.json") else {}
+                ID = f"user_{t[:5]}"
+                data[ID] = t
+                json.dump(data, open("database.json", "w"), indent=4)
+                
+                st.session_state.token_fetched = True # علامة لمنع إعادة التنفيذ
+                st.success("✅ تم الربط بنجاح")
+                st.code(f"{REDIRECT_URI}?id={ID}")
+                st.subheader("🔗 رابط الرفع الخاص بك :")
+                st.code(final_link)
+                st.stop()
+            except Exception as e:
+                st.error(f"خطأ في الـ Token: {e}")
     if st.button("🚀 تسجيل الدخول وربط القناة الآن", use_container_width=True):
         try:
             # flow = InstalledAppFlow.from_client_secrets_file("credentials.json", scopes)
