@@ -2,13 +2,6 @@ streamlit
 google-api-python-client
 google-auth-oauthlib
 google-auth-httplib2
-google.auth.transport
-googleapiclient
-google.oauth2
+google-auth
 cryptography
 requests
-smtplib
-email
-datetime
-time
-json
