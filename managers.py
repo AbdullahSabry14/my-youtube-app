@@ -156,24 +156,29 @@ if not URL :
     scopes = ["https://www.googleapis.com/auth/youtube", 
             "https://www.googleapis.com/auth/youtube.upload", 
             "https://www.googleapis.com/auth/youtube.force-ssl",
-            "https://www.googleapis.com/auth/userinfo.email"]    
+            "https://www.googleapis.com/auth/userinfo.email"]        
     code = st.query_params.get("code")
+    
+    # القفل البرمجي: "token_fetched" يمنع الكود من محاولة استخدام الـ code مجدداً بعد نجاح العملية
     if code and "token_fetched" not in st.session_state:
         try:
-            flow = Flow.from_client_config(json.loads(st.secrets["G_CRED"]), scopes, redirect_uri=REDIRECT_URI)
+            flow = Flow.from_client_config(json.loads(st.secrets["G_CRED"]), scopes, redirect_uri=current_url)
             flow.fetch_token(code=code)
             creds = flow.credentials
+            
+            # حفظ الـ Credentials
             t = f.encrypt(creds.to_json().encode()).decode()
             data = json.load(open("database.json", "r")) if os.path.exists("database.json") else {}
             ID = f"user_{t[:5]}"
             data[ID] = t
             json.dump(data, open("database.json", "w"), indent=4)
             
-            st.session_state.token_fetched = True # علامة لمنع إعادة التنفيذ
+            st.session_state.token_fetched = True 
             st.success("✅ تم الربط بنجاح")
-            st.code(f"{REDIRECT_URI}?id={ID}")
+            
+            # عرض رابط الرفع الثابت
             st.subheader("🔗 رابط الرفع الخاص بك :")
-            st.code(final_link)
+            st.code(f"{current_url}?id={ID}")
             st.stop()
         except Exception as e:
             st.error(f"خطأ في الـ Token: {e}")
