@@ -156,18 +156,6 @@ if not URL :
             "https://www.googleapis.com/auth/youtube.upload", 
             "https://www.googleapis.com/auth/youtube.force-ssl",
             "https://www.googleapis.com/auth/userinfo.email"]
-    if st.button("🚀 تسجيل الدخول وربط القناة الآن", use_container_width=True):
-        try:
-            # flow = InstalledAppFlow.from_client_secrets_file("credentials.json", scopes)
-            # creds = flow.run_local_server(port=0)            
-            current_url = "https://sabry-youtube.streamlit.app/" 
-            flow = Flow.from_client_config(json.loads(st.secrets["G_CRED"]), scopes,redirect_uri = current_url)   
-            auth_url, _ = flow.authorization_url(prompt='consent')
-            st.markdown(f"### [اضغط هنا لتسجيل الدخول لقناتك]({auth_url})")
-            st.stop()
-        except Exception as e:
-            st.error(f"❌ فشل الربط: {e}")
-            st.info("تأكد من وجود ملف database.json في مجلد المشروع.")
     code = st.query_params.get("code")
     if code:
         flow = Flow.from_client_config(json.loads(st.secrets["G_CRED"]), scopes,redirect_uri = current_url)   
@@ -190,6 +178,19 @@ if not URL :
         st.divider()
         st.subheader("🔗 رابط الرفع الخاص بك :")
         st.code(final_link)        
+
+    if st.button("🚀 تسجيل الدخول وربط القناة الآن", use_container_width=True):
+        try:
+            # flow = InstalledAppFlow.from_client_secrets_file("credentials.json", scopes)
+            # creds = flow.run_local_server(port=0)            
+            current_url = "https://sabry-youtube.streamlit.app/" 
+            flow = Flow.from_client_config(json.loads(st.secrets["G_CRED"]), scopes,redirect_uri = current_url)   
+            auth_url, _ = flow.authorization_url(prompt='consent')
+            st.markdown(f"### [اضغط هنا لتسجيل الدخول لقناتك]({auth_url})")
+            st.stop()
+        except Exception as e:
+            st.error(f"❌ فشل الربط: {e}")
+            st.info("تأكد من وجود ملف database.json في مجلد المشروع.")
 
 else :
     # --- الشاشة الجانبية ---
