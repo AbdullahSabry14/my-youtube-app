@@ -174,6 +174,14 @@ if not URL :
         data[ID] = t
         with open("database.json", "w") as file :
                 json.dump(data, file, indent=4)
+        st.success("✅ تم الربط بنجاح")
+        import socket; network_url = f"http://{socket.gethostbyname(socket.gethostname())}:8501"
+        # final_link = f"https://sabry-youtube.streamlit.app/?id={ID}"        
+        final_link = f"{network_url}/?id={ID}"
+        st.divider()
+        st.subheader("🔗 رابط الرفع الخاص بك :")
+        st.code(final_link)        
+
     if st.button("🚀 تسجيل الدخول وربط القناة الآن", use_container_width=True):
         try:
             # flow = InstalledAppFlow.from_client_secrets_file("credentials.json", scopes)
@@ -192,13 +200,6 @@ if not URL :
         except Exception as e:
             st.error(f"❌ فشل الربط: {e}")
             st.info("تأكد من وجود ملف database.json في مجلد المشروع.")
-    st.success("✅ تم الربط بنجاح")
-    import socket; network_url = f"http://{socket.gethostbyname(socket.gethostname())}:8501"
-    # final_link = f"https://sabry-youtube.streamlit.app/?id={ID}"        
-    final_link = f"{network_url}/?id={ID}"
-    st.divider()
-    st.subheader("🔗 رابط الرفع الخاص بك :")
-    st.code(final_link)        
 else :
     # --- الشاشة الجانبية ---
     with st.sidebar:
