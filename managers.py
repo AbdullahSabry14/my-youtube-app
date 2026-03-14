@@ -38,27 +38,20 @@ if 'step' not in st.session_state:
 # --- 3. جلب الـ ID من الرابط ومعالجة الـ Code ---
 code = st.query_params.get("code")
 
-if code and 'token_processed' not in st.session_state:
+if code and 'auth_flow' in st.session_state:
     try:
-        # استخدام secrets بدلاً من ملف محلي
-        flow = Flow.from_client_config(
-            client_config=json.loads(st.secrets["G_CRED"]),
-            scopes=scopes,
-            redirect_uri="https://sabry-youtube.streamlit.app/"
-        )
+        flow = st.session_state.auth_flow
         flow.fetch_token(code=code)
         creds = flow.credentials
         
-        # تشفير وحفظ البيانات
-        t = f.encrypt(creds.to_json().encode()).decode()
-        # ... (منطق قراءة وكتابة database.json الخاص بك) ...
+        # ... (باقي منطق الحفظ والتشفير الخاص بك) ...
         
-        st.session_state.token_processed = True # لمنع التكرار
+        # تنظيف الجلسة
+        del st.session_state.auth_flow
         st.success("✅ تم الربط بنجاح")
-        st.rerun() # إعادة تحميل الصفحة لإزالة الكود من الرابط
+        st.rerun()
     except Exception as e:
         st.error(f"❌ خطأ في تبادل التوكن: {e}")
-
 # منطق فحص الـ ID بعد ذلك
 URL = st.query_params.get("id")
 # print(URL)
@@ -195,8 +188,16 @@ if not URL :
             # )            
             
             # current_url = st.query_params.get("base_url") 
-            flow = Flow.from_client_config(client_config=json.loads(st.secrets["G_CRED"]),scopes=scopes,redirect_uri = "https://sabry-youtube.streamlit.app/")   
-            auth_url, _ = flow.authorization_url(prompt='consent')
+        flow = Flow.from_client_config(
+                client_config=json.loads(st.secrets["G_CRED"]),
+                scopes=scopes,
+                redirect_uri="https://sabry-youtube.streamlit.app/"
+            )
+            auth_url, _ = flow.authorization_url(prompt='consent', access_type='offline')
+            
+            # --- حفظ الـ flow في الجلسة ---
+            st.session_state.auth_flow = flow
+            
             st.markdown(f"### [اضغط هنا لتسجيل الدخول لقناتك]({auth_url})")
             st.stop()
         except Exception as e:
