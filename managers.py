@@ -73,7 +73,7 @@ if not user_id:
             st.success("✅ تم الربط بنجاح!")
             st.code(f"{REDIRECT_URI}?id={new_id}")
             st.session_state.flow = None
-            st.stop()
+            # st.stop()
         except Exception as e:
             st.error(f"خطأ في التوكن: {e}")
     else:
