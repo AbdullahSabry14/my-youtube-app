@@ -34,25 +34,30 @@ if 'step' not in st.session_state:
     st.session_state.v_title = ""
     st.session_state.v_desc = ""
     st.session_state.tags = []
-    st.session_state.show_err = False 
-# --- 3. جلب الـ ID من الرابط ومعالجة الـ Code ---
+    st.session_state.show_err = False
 code = st.query_params.get("code")
 
-if code and 'auth_flow' in st.session_state:
+if code and os.path.exists("temp_verifier.txt"):
+    with open("temp_verifier.txt", "r") as f:
+        verifier = f.read()
+    
+    flow = Flow.from_client_config(
+        json.loads(st.secrets["G_CRED"]), 
+        scopes=scopes, 
+        redirect_uri="https://sabry-youtube.streamlit.app/"
+    )
+    flow.code_verifier = verifier
+    
     try:
-        flow = st.session_state.auth_flow
         flow.fetch_token(code=code)
-        creds = flow.credentials
+        # ... (باقي كود الحفظ والتشفير كما كان) ...
         
-        # ... (باقي منطق الحفظ والتشفير الخاص بك) ...
-        
-        # تنظيف الجلسة
-        del st.session_state.auth_flow
+        # بعد النجاح احذف الملف المؤقت
+        os.remove("temp_verifier.txt")
         st.success("✅ تم الربط بنجاح")
         st.rerun()
     except Exception as e:
-        st.error(f"❌ خطأ في تبادل التوكن: {e}")
-# منطق فحص الـ ID بعد ذلك
+        st.error(f"❌ خطأ: {e}")# منطق فحص الـ ID بعد ذلك
 URL = st.query_params.get("id")
 # print(URL)
 # f = Fernet(st.secrets["KEY"].encode())
@@ -194,7 +199,8 @@ if not URL :
             redirect_uri="https://sabry-youtube.streamlit.app/"
             )
             auth_url, _ = flow.authorization_url(prompt='consent', access_type='offline')
-            
+            with open("temp_verifier.txt", "w") as f:
+                f.write(flow.code_verifier)
             # --- حفظ الـ flow في الجلسة ---
             st.session_state.auth_flow = flow
             
