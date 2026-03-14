@@ -7,7 +7,7 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 st.write("حالة الجلسة (Session State):", st.session_state)
 st.write("الرابط (Query Params):", st.query_params)
-st.sidebar.write("r", URL)# إعدادات ثابتة
+st.write("r")
 REDIRECT_URI = "https://sabry-youtube.streamlit.app/"
 SCOPES = [
     "https://www.googleapis.com/auth/youtube",
