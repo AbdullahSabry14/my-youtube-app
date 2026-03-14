@@ -1,21 +1,36 @@
 import streamlit as st
 import json
 import os
+import sys
+from io import StringIO
 from cryptography.fernet import Fernet
 from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
+
+# --- هاك لإظهار الـ print في الـ sidebar ---
+if 'log_buffer' not in st.session_state:
+    st.session_state.log_buffer = StringIO()
+    sys.stdout = st.session_state.log_buffer
+
+# --- إعدادات الصفحة ---
+st.set_page_config(page_title="المساعد المنطقي", layout="wide")
+
+# عرض الـ print في الـ sidebar
+with st.sidebar:
+    st.subheader("سجل المخرجات (Print Logs)")
+    st.code(st.session_state.log_buffer.getvalue())
+
 st.write("حالة الجلسة (Session State):", st.session_state)
 st.write("الرابط (Query Params):", st.query_params)
-st.write("r")
+print("r")
+
 REDIRECT_URI = "https://sabry-youtube.streamlit.app/"
 SCOPES = [
     "https://www.googleapis.com/auth/youtube",
     "https://www.googleapis.com/auth/youtube.upload",
     "https://www.googleapis.com/auth/userinfo.email"
 ]
-
-st.set_page_config(page_title="المساعد المنطقي", layout="wide")
 
 # تهيئة التشفير
 f = Fernet(st.secrets["KEY"].encode())
@@ -35,6 +50,7 @@ def get_flow():
 query_params = st.query_params
 code = query_params.get("code")
 user_id = query_params.get("id")
+URL = user_id # تعريف URL لتجنب الخطأ
 
 if not user_id:
     st.title("🔗 ربط قناة يوتيوب")
@@ -56,7 +72,7 @@ if not user_id:
             
             st.success("✅ تم الربط بنجاح!")
             st.code(f"{REDIRECT_URI}?id={new_id}")
-            st.session_state.flow = None # تنظيف
+            st.session_state.flow = None
             st.stop()
         except Exception as e:
             st.error(f"خطأ في التوكن: {e}")
@@ -69,7 +85,6 @@ if not user_id:
             st.markdown(f"### [اضغط هنا للربط]({auth_url})")
 
 else:
-    # --- هنا منطق لوحة التحكم (إذا كان الـ ID موجوداً) ---
     st.sidebar.title("🛠️ مركز التحكم")
     try:
         with open("database.json", "r") as file:
@@ -80,9 +95,7 @@ else:
             creds_json = f.decrypt(user_data.encode()).decode()
             creds = Credentials.from_authorized_user_info(json.loads(creds_json))
             yt = build("youtube", "v3", credentials=creds)
-            
             st.write(f"مرحباً بك في لوحة تحكم القناة")
-            # ضع هنا باقي منطق رفع الفيديوهات الخاص بك...
         else:
             st.error("مفتاح غير صحيح")
     except Exception as e:
