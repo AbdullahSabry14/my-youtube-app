@@ -21,6 +21,11 @@ os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"
 # --- 1. إعدادات الصفحة ---
 st.set_page_config(page_title="المساعد المنطقي", page_icon="🤖", layout="wide")
 
+
+scopes = ["https://www.googleapis.com/auth/youtube", 
+        "https://www.googleapis.com/auth/youtube.upload", 
+        "https://www.googleapis.com/auth/youtube.force-ssl",
+        "https://www.googleapis.com/auth/userinfo.email"]
 # --- 2. تهيئة الذاكرة (Session State) ---
 if 'step' not in st.session_state:
     st.session_state.step = 1
