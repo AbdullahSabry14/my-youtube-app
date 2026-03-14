@@ -187,11 +187,11 @@ if not URL :
             #     success_message='.✅ تم بنجاح يا صاح! يمكنك إغلاق النافذة والعودة للتطبيق'
             # )            
             
-            # current_url = st.query_params.get("base_url") 
-        flow = Flow.from_client_config(
-                client_config=json.loads(st.secrets["G_CRED"]),
-                scopes=scopes,
-                redirect_uri="https://sabry-youtube.streamlit.app/"
+            current_url = st.query_params.get("base_url") 
+            flow = Flow.from_client_config(
+            client_config=json.loads(st.secrets["G_CRED"]),
+            scopes=scopes,
+            redirect_uri="https://sabry-youtube.streamlit.app/"
             )
             auth_url, _ = flow.authorization_url(prompt='consent', access_type='offline')
             
