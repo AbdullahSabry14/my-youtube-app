@@ -7,8 +7,7 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 st.write("حالة الجلسة (Session State):", st.session_state)
 st.write("الرابط (Query Params):", st.query_params)
-print("r")
-# إعدادات ثابتة
+st.sidebar.write("r", URL)# إعدادات ثابتة
 REDIRECT_URI = "https://sabry-youtube.streamlit.app/"
 SCOPES = [
     "https://www.googleapis.com/auth/youtube",
@@ -39,10 +38,10 @@ user_id = query_params.get("id")
 
 if not user_id:
     st.title("🔗 ربط قناة يوتيوب")
-    print("1")
+    st.sidebar.write("1", URL)
     if code and st.session_state.flow:
         try:
-            print("2")
+            st.sidebar.write("2", URL)
             flow = st.session_state.flow
             flow.fetch_token(code=code)
             creds = flow.credentials
@@ -62,7 +61,7 @@ if not user_id:
         except Exception as e:
             st.error(f"خطأ في التوكن: {e}")
     else:
-        print("3")
+        st.sidebar.write("3", URL)
         if st.button("🚀 تسجيل الدخول وربط القناة"):
             flow = get_flow()
             auth_url, _ = flow.authorization_url(prompt='consent', access_type='offline')
