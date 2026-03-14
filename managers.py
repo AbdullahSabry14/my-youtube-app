@@ -5,16 +5,14 @@ import sys
 from io import StringIO
 from cryptography.fernet import Fernet
 from google_auth_oauthlib.flow import Flow
-from googleapiclient.discovery import build
 
-# --- هاك الـ Print ---
+# --- تسجيل المخرجات في الـ Sidebar ---
 if 'log_buffer' not in st.session_state:
     st.session_state.log_buffer = StringIO()
     sys.stdout = st.session_state.log_buffer
 
 st.set_page_config(page_title="المساعد المنطقي", layout="wide")
 
-# عرض المخرجات في الـ Sidebar
 with st.sidebar:
     st.subheader("سجل المخرجات")
     st.code(st.session_state.log_buffer.getvalue())
@@ -26,7 +24,7 @@ SCOPES = [
     "https://www.googleapis.com/auth/userinfo.email"
 ]
 
-def get_flow():
+def create_flow():
     return Flow.from_client_config(
         json.loads(st.secrets["G_CRED"]),
         scopes=SCOPES,
@@ -42,13 +40,12 @@ if not user_id:
     st.title("🔗 ربط قناة يوتيوب")
     
     if code:
+        # عند العودة من جوجل، نعيد بناء الـ Flow فوراً
         try:
-            # إعادة بناء الـ flow والتبادل مباشرة
-            flow = get_flow()
+            flow = create_flow()
             flow.fetch_token(code=code)
             creds = flow.credentials
             
-            # حفظ البيانات
             f_enc = Fernet(st.secrets["KEY"].encode())
             t = f_enc.encrypt(creds.to_json().encode()).decode()
             
@@ -62,13 +59,14 @@ if not user_id:
             st.code(f"{REDIRECT_URI}?id={new_id}")
             st.stop()
         except Exception as e:
-            st.error(f"خطأ في التوكن: {e}")
-            print(f"Exception: {e}")
+            st.error(f"خطأ أثناء الربط: {e}")
+            print(f"Auth Error: {e}")
     else:
         if st.button("🚀 تسجيل الدخول وربط القناة"):
-            flow = get_flow()
+            flow = create_flow()
             auth_url, _ = flow.authorization_url(prompt='consent', access_type='offline')
+            # لا نحفظ الـ flow في session_state بل نعتمد على الرابط مباشرة
             st.markdown(f"### [اضغط هنا للربط]({auth_url})")
 
 else:
-    st.write("أنت الآن في لوحة التحكم.")
+    st.write("مرحباً بك في لوحة التحكم.")
