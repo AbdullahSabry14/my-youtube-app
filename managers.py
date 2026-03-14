@@ -37,9 +37,10 @@ user_id = query_params.get("id")
 
 if not user_id:
     st.title("🔗 ربط قناة يوتيوب")
-    
+    print("1")
     if code and st.session_state.flow:
         try:
+            print("2")
             flow = st.session_state.flow
             flow.fetch_token(code=code)
             creds = flow.credentials
@@ -59,6 +60,7 @@ if not user_id:
         except Exception as e:
             st.error(f"خطأ في التوكن: {e}")
     else:
+        print("3")
         if st.button("🚀 تسجيل الدخول وربط القناة"):
             flow = get_flow()
             auth_url, _ = flow.authorization_url(prompt='consent', access_type='offline')
