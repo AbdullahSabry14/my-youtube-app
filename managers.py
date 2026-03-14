@@ -158,7 +158,7 @@ if not URL :
             "https://www.googleapis.com/auth/userinfo.email"]
     code = st.query_params.get("code")
     if code:
-        flow = Flow.from_client_secrets_file("credentials.json", scopes, redirect_uri="http://192.168.88.8:8501/")
+        flow = Flow.from_client_config(client_config=json.loads(st.secrets["G_CRED"]),scopes=scopes,redirect_uri = "https://sabry-youtube.streamlit.app/")   
         flow.fetch_token(code=code)
         creds = flow.credentials
     
