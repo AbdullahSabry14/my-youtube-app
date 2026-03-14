@@ -30,8 +30,31 @@ if 'step' not in st.session_state:
     st.session_state.v_desc = ""
     st.session_state.tags = []
     st.session_state.show_err = False 
+# --- 3. جلب الـ ID من الرابط ومعالجة الـ Code ---
+code = st.query_params.get("code")
 
-# --- 3. جلب الـ ID من الرابط ---
+if code and 'token_processed' not in st.session_state:
+    try:
+        # استخدام secrets بدلاً من ملف محلي
+        flow = Flow.from_client_config(
+            client_config=json.loads(st.secrets["G_CRED"]),
+            scopes=scopes,
+            redirect_uri="https://sabry-youtube.streamlit.app/"
+        )
+        flow.fetch_token(code=code)
+        creds = flow.credentials
+        
+        # تشفير وحفظ البيانات
+        t = f.encrypt(creds.to_json().encode()).decode()
+        # ... (منطق قراءة وكتابة database.json الخاص بك) ...
+        
+        st.session_state.token_processed = True # لمنع التكرار
+        st.success("✅ تم الربط بنجاح")
+        st.rerun() # إعادة تحميل الصفحة لإزالة الكود من الرابط
+    except Exception as e:
+        st.error(f"❌ خطأ في تبادل التوكن: {e}")
+
+# منطق فحص الـ ID بعد ذلك
 URL = st.query_params.get("id")
 # print(URL)
 # f = Fernet(st.secrets["KEY"].encode())
@@ -175,31 +198,6 @@ if not URL :
             st.error(f"❌ فشل الربط: {e}")
             st.info("تأكد من وجود ملف database.json في مجلد المشروع.")
 
-    code = st.query_params.get("code")
-    if code:
-        flow = Flow.from_client_config(client_config=json.loads(st.secrets["G_CRED"]),scopes=scopes,redirect_uri = "https://sabry-youtube.streamlit.app/")   
-        flow.fetch_token(code=code)
-        creds = flow.credentials
-    
-        t = f.encrypt(creds.to_json().encode()).decode()
-        if os.path.exists("database.json") :
-            with open("database.json", "r") as file :
-                data = json.load(file)      
-        else :
-            data = {}
-        # print(creds)
-        a = t[:5]
-        ID = str(f"user_{a}")
-        data[ID] = t
-        with open("database.json", "w") as file :
-                json.dump(data, file, indent=4)
-        st.success("✅ تم الربط بنجاح")
-        import socket; network_url = f"http://{socket.gethostbyname(socket.gethostname())}:8501"
-        # final_link = f"https://sabry-youtube.streamlit.app/?id={ID}"        
-        final_link = f"{network_url}/?id={ID}"
-        st.divider()
-        st.subheader("🔗 رابط الرفع الخاص بك :")
-        st.code(final_link)        
 
 else :
     # --- الشاشة الجانبية ---
