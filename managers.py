@@ -156,6 +156,12 @@ if not URL :
             "https://www.googleapis.com/auth/youtube.upload", 
             "https://www.googleapis.com/auth/youtube.force-ssl",
             "https://www.googleapis.com/auth/userinfo.email"]
+    code = st.query_params.get("code")
+    if code:
+        flow = Flow.from_client_secrets_file("credentials.json", scopes, redirect_uri="http://192.168.88.8:8501/")
+        flow.fetch_token(code=code)
+        creds = flow.credentials
+
     if st.button("🚀 تسجيل الدخول وربط القناة الآن", use_container_width=True):
         try:
             # flow = InstalledAppFlow.from_client_secrets_file("credentials.json", scopes)
@@ -174,11 +180,6 @@ if not URL :
         except Exception as e:
             st.error(f"❌ فشل الربط: {e}")
             st.info("تأكد من وجود ملف database.json في مجلد المشروع.")
-    code = st.query_params.get("code")
-    if code:
-        flow = Flow.from_client_secrets_file("credentials.json", scopes, redirect_uri="http://192.168.88.8:8501/")
-        flow.fetch_token(code=code)
-        creds = flow.credentials
     t = f.encrypt(creds.to_json().encode()).decode()
     if os.path.exists("database.json") :
         with open("database.json", "r") as file :
