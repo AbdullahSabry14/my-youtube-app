@@ -159,55 +159,46 @@ if not URL :
     st.markdown("<h1 style='text-align: center;'>🔗 ربط قناة يوتيوب الجديدة</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center;'>قم بربط قناتك للحصول على رابط الرفع الخ اص بك</p>", unsafe_allow_html=True)
     st.write("اضغط لتسجيل الدخول لقناتك للقدرة على التحكم ونشر فيديوهاتك :")
-    if st.button("🚀 تسجيل الدخول وربط القناة الآن", use_container_width=True):
-        try:
             # flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
             # # creds = flow.run_local_server(port=0)            
             # creds = flow.run_local_server(
             #     port=0, 
             #     authorization_prompt_message='...يرجى تسجيل الدخول في المتصفح',
             #     success_message='.✅ تم بنجاح يا صاح! يمكنك إغلاق النافذة والعودة للتطبيق'
-            # )            
-            code = st.query_params.get("code")
-            
-            if not code:
-                flow = Flow.from_client_config(json.loads(st.secrets["G_CRED"]), scopes=SCOPES, redirect_uri=REDIRECT_URI)
-                auth_url, _ = flow.authorization_url(prompt='consent', access_type='offline')
-                st.link_button("🚀 تسجيل الدخول وربط القناة", auth_url, use_container_width=True)
-            else:
-                flow = Flow.from_client_config(json.loads(st.secrets["G_CRED"]), scopes=SCOPES, redirect_uri=REDIRECT_URI)
-                flow.fetch_token(code=code)
-                creds = flow.credentials
-                
-                t = f.encrypt(creds.to_json().encode()).decode()
-                if os.path.exists("database.json") :
-                    with open("database.json", "r") as file :
-                        data = json.load(file)      
-                else :
-                    data = {}
-                # print(creds)
-                a = t[:5]
-                ID = str(f"user_{a}")
-                data[ID] = t
-                with open("database.json", "w") as file :
-                        json.dump(data, file, indent=4)
-                st.success("✅ تم الربط بنجاح")
-                import socket; network_url = f"http://{socket.gethostbyname(socket.gethostname())}:8501"
-                final_link = f"https://sabry-youtube.streamlit.app/?id={ID}"        
-                # final_link = f"{network_url}/?id={ID}"
-                st.divider()
-                st.subheader("🔗 رابط الرفع الخاص بك :")
-                st.code(final_link)        
-            
-            # current_url = st.query_params.get("base_url") 
-        except Exception as e:
-            st.error(f"❌ فشل الربط: {e}")
-            st.info("تأكد من وجود ملف database.json في مجلد المشروع.")
-    # code = st.query_params.get("code")
-    # if code:
-    #     flow = Flow.from_client_secrets_file(json.loads(st.secrets["G_CRED"]), scopes, redirect_uri="http://192.168.88.8:8501/")
-    #     flow.fetch_token(code=code)
-    #     creds = flow.credentials
+        # )            
+    code = st.query_params.get("code")
+    
+    if not code:
+        flow = Flow.from_client_config(json.loads(st.secrets["G_CRED"]), scopes=SCOPES, redirect_uri=REDIRECT_URI)
+        auth_url, _ = flow.authorization_url(prompt='consent', access_type='offline')
+        st.link_button("🚀 تسجيل الدخول وربط القناة", auth_url, use_container_width=True)
+    else:
+        flow = Flow.from_client_config(json.loads(st.secrets["G_CRED"]), scopes=SCOPES, redirect_uri=REDIRECT_URI)
+        flow.fetch_token(code=code)
+        creds = flow.credentials
+        
+        t = f.encrypt(creds.to_json().encode()).decode()
+        if os.path.exists("database.json") :
+            with open("database.json", "r") as file :
+                data = json.load(file)      
+        else :
+            data = {}
+        # print(creds)
+        a = t[:5]
+        ID = str(f"user_{a}")
+        data[ID] = t
+        with open("database.json", "w") as file :
+                json.dump(data, file, indent=4)
+        st.success("✅ تم الربط بنجاح")
+        import socket; network_url = f"http://{socket.gethostbyname(socket.gethostname())}:8501"
+        final_link = f"https://sabry-youtube.streamlit.app/?id={ID}"        
+        # final_link = f"{network_url}/?id={ID}"
+        st.divider()
+        st.subheader("🔗 رابط الرفع الخاص بك :")
+        st.code(final_link)        
+        
+#     flow.fetch_token(code=code)
+#     creds = flow.credentials
 else :
     # --- الشاشة الجانبية ---
     with st.sidebar:
