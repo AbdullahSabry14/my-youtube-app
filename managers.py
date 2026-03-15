@@ -167,30 +167,30 @@ if not URL :
             #     success_message='.✅ تم بنجاح يا صاح! يمكنك إغلاق النافذة والعودة للتطبيق'
         # )            
     code = st.query_params.get("code")
+    
+    if not code:
+        # كود الزر كما هو
+        flow = Flow.from_client_config(json.loads(st.secrets["G_CRED"]), scopes=SCOPES, redirect_uri=REDIRECT_URI)
+        auth_url, _ = flow.authorization_url(prompt='consent', access_type='offline')
+        st.link_button("🚀 تسجيل الدخول وربط القناة", auth_url, use_container_width=True)
         
-        if not code:
-            # كود الزر كما هو
+    elif "token_processed" not in st.session_state: # شرط إضافي لمنع التكرار
+        try:
             flow = Flow.from_client_config(json.loads(st.secrets["G_CRED"]), scopes=SCOPES, redirect_uri=REDIRECT_URI)
-            auth_url, _ = flow.authorization_url(prompt='consent', access_type='offline')
-            st.link_button("🚀 تسجيل الدخول وربط القناة", auth_url, use_container_width=True)
+            flow.fetch_token(code=code)
+            creds = flow.credentials
             
-        elif "token_processed" not in st.session_state: # شرط إضافي لمنع التكرار
-            try:
-                flow = Flow.from_client_config(json.loads(st.secrets["G_CRED"]), scopes=SCOPES, redirect_uri=REDIRECT_URI)
-                flow.fetch_token(code=code)
-                creds = flow.credentials
-                
-                # حفظ الحالة لمنع التكرار
-                st.session_state.token_processed = True
-                
-                t = f.encrypt(creds.to_json().encode()).decode()
-                # ... باقي كود الحفظ في database.json ...
-                
-                st.success("✅ تم الربط بنجاح!")
-                st.rerun() # إعادة تحميل نظيفة
-                
-            except Exception as e:
-                st.error(f"حدث خطأ: {e}")#     flow.fetch_token(code=code)
+            # حفظ الحالة لمنع التكرار
+            st.session_state.token_processed = True
+            
+            t = f.encrypt(creds.to_json().encode()).decode()
+            # ... باقي كود الحفظ في database.json ...
+            
+            st.success("✅ تم الربط بنجاح!")
+            st.rerun() # إعادة تحميل نظيفة
+            
+        except Exception as e:
+            st.error(f"حدث خطأ: {e}")#     flow.fetch_token(code=code)
 #     creds = flow.credentials
 else :
     # --- الشاشة الجانبية ---
