@@ -196,7 +196,7 @@ if not URL :
         st.divider()
         st.subheader("🔗 رابط الرفع الخاص بك :")
         st.code(final_link)        
-        
+        st.rerun()
 #     flow.fetch_token(code=code)
 #     creds = flow.credentials
 else :
